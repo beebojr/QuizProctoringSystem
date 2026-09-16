@@ -23,3 +23,6 @@ None yet — plan scan clean.
 |------|--------|--------|
 | Task 1: Project Setup | DONE | (previous) |
 | Task 2: Domain Entities & Enums | DONE | 4e9db67 feat(domain): add domain entities and enums |
+| Task 3: Application Layer | DONE | 0747175 Add Application layer interfaces, models, behaviors, and DI registration |
+| Task 4: Data Layer | DONE | 06627a4 feat: implement AppDbContext and DI registration for Data layer |
+| Task 5: Infrastructure Services | PENDING | |
