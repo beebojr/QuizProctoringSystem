@@ -4,6 +4,9 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Layout from './components/Layout';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
+import Quizzes from './pages/Quizzes';
+import Schedules from './pages/Schedules';
+import Assignments from './pages/Assignments';
 
 function ProtectedRoute({ children, adminOnly = false }: { children: React.ReactNode; adminOnly?: boolean }) {
   const { user, isLoading } = useAuth();
@@ -24,9 +27,9 @@ function AppRoutes() {
     <Routes>
       <Route path="/login" element={user ? <Navigate to="/dashboard" /> : <Login />} />
       <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-      <Route path="/quizzes" element={<ProtectedRoute><div>Quizzes</div></ProtectedRoute>} />
-      <Route path="/schedules" element={<ProtectedRoute adminOnly><div>Schedules</div></ProtectedRoute>} />
-      <Route path="/assignments" element={<ProtectedRoute><div>Assignments</div></ProtectedRoute>} />
+      <Route path="/quizzes" element={<ProtectedRoute><Quizzes /></ProtectedRoute>} />
+      <Route path="/schedules" element={<ProtectedRoute adminOnly><Schedules /></ProtectedRoute>} />
+      <Route path="/assignments" element={<ProtectedRoute><Assignments /></ProtectedRoute>} />
       <Route path="/reports" element={<ProtectedRoute adminOnly><div>Reports</div></ProtectedRoute>} />
       <Route path="/users" element={<ProtectedRoute adminOnly><div>Users</div></ProtectedRoute>} />
       <Route path="*" element={<Navigate to="/dashboard" />} />
