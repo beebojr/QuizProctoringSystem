@@ -7,6 +7,8 @@ import Dashboard from './pages/Dashboard';
 import Quizzes from './pages/Quizzes';
 import Schedules from './pages/Schedules';
 import Assignments from './pages/Assignments';
+import Reports from './pages/Reports';
+import Users from './pages/Users';
 
 function ProtectedRoute({ children, adminOnly = false }: { children: React.ReactNode; adminOnly?: boolean }) {
   const { user, isLoading } = useAuth();
@@ -30,8 +32,8 @@ function AppRoutes() {
       <Route path="/quizzes" element={<ProtectedRoute><Quizzes /></ProtectedRoute>} />
       <Route path="/schedules" element={<ProtectedRoute adminOnly><Schedules /></ProtectedRoute>} />
       <Route path="/assignments" element={<ProtectedRoute><Assignments /></ProtectedRoute>} />
-      <Route path="/reports" element={<ProtectedRoute adminOnly><div>Reports</div></ProtectedRoute>} />
-      <Route path="/users" element={<ProtectedRoute adminOnly><div>Users</div></ProtectedRoute>} />
+      <Route path="/reports" element={<ProtectedRoute adminOnly><Reports /></ProtectedRoute>} />
+      <Route path="/users" element={<ProtectedRoute adminOnly><Users /></ProtectedRoute>} />
       <Route path="*" element={<Navigate to="/dashboard" />} />
     </Routes>
   );
