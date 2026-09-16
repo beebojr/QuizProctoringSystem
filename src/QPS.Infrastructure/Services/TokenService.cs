@@ -4,16 +4,10 @@ using System.Security.Cryptography;
 using System.Text;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
+using QPS.Application.Common.Interfaces;
 using QPS.Domain.Entities;
 
 namespace QPS.Infrastructure.Services;
-
-public interface ITokenService
-{
-    string GenerateAccessToken(User user);
-    string GenerateRefreshToken();
-    ClaimsPrincipal? ValidateToken(string token);
-}
 
 public class TokenService : ITokenService
 {
