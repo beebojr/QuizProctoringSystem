@@ -19,4 +19,7 @@ None yet — plan scan clean.
 
 ## Tasks
 
-(No tasks completed yet)
+| Task | Status | Commit |
+|------|--------|--------|
+| Task 1: Project Setup | DONE | (previous) |
+| Task 2: Domain Entities & Enums | DONE | 4e9db67 feat(domain): add domain entities and enums |
