@@ -14,6 +14,7 @@ public static class DependancyInjection
         services.AddScoped<ICurrentUserService, CurrentUserService>();
         services.AddScoped<ITokenService, TokenService>();
         services.AddScoped<INotificationService, NotificationService>();
+        services.AddScoped<IProctorAssignmentService, ProctorAssignmentService>();
         return services;
     }
 }
