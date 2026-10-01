@@ -8,9 +8,12 @@ public class Quiz : BaseEntity
     public Course Course { get; set; } = null!;
     public Guid SemesterId { get; set; }
     public Semester Semester { get; set; } = null!;
+    public int WeekNumber { get; set; }
     public DateOnly QuizDate { get; set; }
     public TimeOnly StartTime { get; set; }
     public TimeOnly EndTime { get; set; }
+    public int SlotNumber { get; set; }
+    public string Group { get; set; } = string.Empty;
     public QuizStatus Status { get; set; }
     public bool AutoAssign { get; set; }
     public bool AddBackup { get; set; }

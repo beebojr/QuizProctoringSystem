@@ -19,30 +19,40 @@ public class GetUsersHandler : IRequestHandler<GetUsersQuery, List<UserDto>>
     public async Task<List<UserDto>> Handle(
         GetUsersQuery request, CancellationToken cancellationToken)
     {
-        var query = _context.Users
+        var users = await _context.Users
             .AsNoTracking()
-            .AsQueryable();
+            .AsQueryable()
+            .Where(u => !u.IsDeleted)
+            .ToListAsync(cancellationToken);
 
         if (request.Role.HasValue)
-            query = query.Where(u => u.Role == request.Role.Value);
+            users = users.Where(u => u.Role == request.Role.Value).ToList();
 
         if (!string.IsNullOrWhiteSpace(request.Search))
         {
             var term = request.Search.ToLower();
-            query = query.Where(u =>
+            users = users.Where(u =>
                 u.Email.ToLower().Contains(term) ||
                 u.FirstName.ToLower().Contains(term) ||
-                u.LastName.ToLower().Contains(term));
+                u.LastName.ToLower().Contains(term)).ToList();
         }
 
-        return await query
+        var userIds = users.Select(u => u.Id).ToList();
+        var assignmentCounts = await _context.ProctorAssignments
+            .AsNoTracking()
+            .Where(a => userIds.Contains(a.UserId) && a.Status != AssignmentStatus.Cancelled && !a.IsDeleted)
+            .GroupBy(a => a.UserId)
+            .Select(g => new { UserId = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(g => g.UserId, g => g.Count, cancellationToken);
+
+        return users
             .Select(u => new UserDto(
                 u.Id, u.Email, u.FirstName, u.LastName, u.FullName,
                 u.Role, u.DayOff, u.TargetWorkload,
                 u.MaxProctoringSessionsPerSemester, u.IsActive,
-                _context.ProctorAssignments.Count(a => a.UserId == u.Id && a.Status != AssignmentStatus.Cancelled && !a.IsDeleted)))
+                assignmentCounts.GetValueOrDefault(u.Id, 0)))
             .OrderBy(u => u.LastName)
             .ThenBy(u => u.FirstName)
-            .ToListAsync(cancellationToken);
+            .ToList();
     }
 }

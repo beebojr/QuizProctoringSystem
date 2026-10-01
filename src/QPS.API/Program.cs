@@ -45,7 +45,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowReactApp", policy =>
     {
-        policy.WithOrigins("http://localhost:3000")
+        policy.WithOrigins("http://localhost:3001")
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials();
@@ -78,11 +78,12 @@ builder.Services.AddInfrastructureServices();
 
 var app = builder.Build();
 
-// Auto-migrate database
+// Auto-migrate database and seed data
 using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     dbContext.Database.Migrate();
+    await SeedData.InitializeAsync(dbContext);
 }
 
 // Middleware pipeline

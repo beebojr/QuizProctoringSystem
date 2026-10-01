@@ -9,6 +9,9 @@ interface Quiz {
   quizDate: string;
   startTime: string;
   endTime: string;
+  weekNumber: number;
+  slotNumber: number;
+  group: string;
   status: string;
   autoAssign: boolean;
   addBackup: boolean;
@@ -74,9 +77,11 @@ export default function Quizzes() {
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Week</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Course</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Time</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Slot</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Group</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Locations</th>
               {isAdmin && <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>}
@@ -85,9 +90,23 @@ export default function Quizzes() {
           <tbody className="bg-white divide-y divide-gray-200">
             {quizzes.map((quiz) => (
               <tr key={quiz.id}>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <span className="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-800">
+                    Week {quiz.weekNumber}
+                  </span>
+                </td>
                 <td className="px-6 py-4 whitespace-nowrap">{quiz.courseName}</td>
                 <td className="px-6 py-4 whitespace-nowrap">{quiz.quizDate}</td>
-                <td className="px-6 py-4 whitespace-nowrap">{quiz.startTime} - {quiz.endTime}</td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  {quiz.slotNumber === 0 ? 'Gap' : `${quiz.slotNumber}${quiz.slotNumber === 1 ? 'ST' : quiz.slotNumber === 2 ? 'ND' : quiz.slotNumber === 3 ? 'RD' : 'TH'}`}
+                  <br />
+                  <span className="text-xs text-gray-500">{quiz.startTime} - {quiz.endTime}</span>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <span className="px-2 py-1 text-xs rounded-full bg-purple-100 text-purple-800">
+                    {quiz.group}
+                  </span>
+                </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span className={`px-2 py-1 text-xs rounded-full ${
                     quiz.status === 'Upcoming' ? 'bg-blue-100 text-blue-800' :
@@ -98,7 +117,7 @@ export default function Quizzes() {
                   </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  {quiz.locations.length} location(s)
+                  {quiz.locations.map((l: any) => l.roomName).join(', ')}
                 </td>
                 {isAdmin && (
                   <td className="px-6 py-4 whitespace-nowrap space-x-2">

@@ -120,7 +120,7 @@ function CreateUserModal({ onClose, onCreated }: { onClose: () => void; onCreate
       toast.success('User created');
       onCreated();
     } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Failed to create user');
+      toast.error(err.response?.data?.errors?.[0] || 'Failed to create user');
     }
   };
 
