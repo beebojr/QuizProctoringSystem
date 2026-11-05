@@ -1,89 +1,48 @@
-# Quiz Proctoring System — Supervisor Questions (v2)
+# Quiz Proctoring System: questions for the supervisor (v3)
 
-Last updated: 2026-09-17
+Last updated: 4 November 2026
 
----
+## Confirmed
 
-## CONFIRMED ANSWERS
+| # | Topic | Answer | In the system |
+|---|-------|--------|---------------|
+| 1 | Database | SQLite | `quizproctoring.db` |
+| 2 | Sign in | Email and password | BCrypt + JWT, roles Admin and TA |
+| 3 | Slots | 1st 8:30–10:00, 2nd 10:15–11:45, 3rd 12:00–13:30, 4th 13:45–15:15, Gap 15:15–15:45, 5th 15:45–17:15 | Fixed catalogue |
+| 4 | Days off | Friday for everyone plus 1–2 days per TA | Rules `FridayOff`, `DayOff` |
+| 5 | Workload | One point per session; a target and a hard maximum | Settings + per-TA overrides |
+| 6 | Creating quizzes | Calendar import (Excel or PDF) and manual entry | Import calendar, Add quiz |
+| 7 | Courses | Managed by the admin per department | Manage courses |
+| 8 | Quiz status | Updates by itself from date and time | Upcoming, Started, Finished |
+| 9 | Notifications | In-app, with mark as read | Bell in the top bar |
+| 10 | Excuses | TA gives a reason and a period; no assignments in it | Excuses page and rule |
+| 11 | Professors | Don't proctor | Only TAs are assigned |
+| 12 | Calendar format | WEEK, DATE, SUBJECT, SLOT, GP, LOCATION; no proctor counts | Parser reads merged cells and splits rooms |
+| 13 | Week number | Needed, used as a reference | Stored and shown |
 
-| # | Question | Answer |
-|---|----------|--------|
-| 1 | Database | SQLite (migrate to PostgreSQL later if needed) |
-| 2 | Authentication | Email/password with BCrypt hashing |
-| 3 | Slot times | 5 fixed 90-min slots (8:30-10:00, 10:15-11:45, 12:00-13:30, 13:45-15:15, 15:45-17:15) |
-| 4 | TA days off | Friday mandatory + 1-2 extra days per TA |
-| 5 | Workload | Each assignment = 1 point; target (soft) and max (hard) limits |
-| 6 | Quiz creation | Both Excel import AND manual creation |
-| 7 | Course management | Pre-defined per department, admin-managed |
-| 8 | Quiz status | Auto-updates based on date/time (Upcoming → Started → Finished) |
-| 9 | Notifications | In-app notifications with mark as read |
-| 10 | Proctors per exam | **Room size determines proctor count** (details TBD) |
-| 11 | Excuses system | TAs submit excuse with reason + duration → system blocks assignments during unavailable period |
-| 12 | Professor role | Professors do not proctor |
+## Still open
 
----
+### 1. The existing batch processing algorithm (high priority)
+You mentioned the university already has a batch algorithm. The demo site has an "Auto-assign Proctors" switch,
+so the system currently assigns automatically and lets the admin override.
 
-## PENDING QUESTIONS
+- Is the existing algorithm something we should call (an API or a program), or a description of how assignment should work?
+- If we should call it, what does it take as input and what does it return?
 
-### 1. Existing Batch Processing Algorithm (HIGH PRIORITY)
+*Why it matters:* the built-in engine (`AssignmentEngine.cs`) can be replaced by it without changing anything else.
 
-**Question:** You mentioned there is an existing batch processing algorithm. What is it?
+### 2. How room size decides the number of proctors (medium)
+Rooms store their seat count and a default number of proctors that the admin sets.
 
-**What we need to know:**
-- Is it an external API we call?
-- A separate system we integrate with?
-- Or does it mean we should just store assignments without auto-assignment logic?
+- Is there a rule, such as one proctor per 30 students, or a fixed number per hall?
+- Do midterms and finals need more proctors than quizzes in the same room?
 
-**Why it matters:** This determines whether we keep, replace, or remove the proctor assignment algorithm in our system.
+### 3. Do finals and midterms count more than a quiz? (medium)
+Every session counts one point toward a TA's target today.
 
----
+### 4. Who may override a rule? (low)
+Admins can assign a TA who breaks a rule if they write a reason. Should that be allowed, and for which rules?
 
-### 2. Excel Exam Schedule Format (HIGH PRIORITY)
-
-**Question:** What columns does the university's exam schedule Excel sheet contain?
-
-**Answer:** The format has been confirmed from the provided PDF:
-
-| Column | Content | Example |
-|--------|---------|---------|
-| WEEK | Week number (reference only) | Week 7, Week 8 |
-| DATE | Full date with day name | Tuesday, April 21, 2026 |
-| SUBJECT | Course name | Computer Networks |
-| SLOT | Time slot | 1ST, 2ND, 3RD, 4TH, 5TH, or Gap |
-| GP | Group number | GPI, GPII, GPIII |
-| LOCATION | Room(s) separated by hyphens | M1.105-M1.205 |
-
-**Slot Time Mapping:**
-- 1ST: 8:30 AM - 10:00 AM
-- 2ND: 10:15 AM - 11:45 AM
-- 3RD: 12:00 PM - 1:30 PM
-- 4TH: 1:45 PM - 3:15 PM
-- Gap: 3:15 PM - 3:45 PM
-- 5TH: 3:45 PM - 5:15 PM
-
-**Status:** ✅ CONFIRMED — System updated to handle this format.
-
----
-
-### 3. Room Size → Proctor Count (MEDIUM PRIORITY)
-
-**Question:** How does room size map to number of proctors?
-
-**Answer:** The number of proctors is dynamic and depends on:
-- The proctor assignment algorithm
-- TAs with active excuses (unavailable)
-- Hall/room size
-
-**Status:** ⚠️ PARTIALLY ANSWERED — Need specific rules for how room size affects proctor count. Currently defaults to 1 proctor per room, admin can adjust manually.
-
----
-
-### 4. Report/Export Requirements (LOW PRIORITY)
-
-**Question:** Does the admin need to export proctoring assignments to Excel or generate reports?
-
-**Current assumption:** No export in the initial version; admin views assignments in the web app only.
-
----
-
-*Please bring these questions to your professor. Once answered, we can finalize the design and update the system accordingly.*
+### 5. Exports (low)
+The quiz board and the workload can be exported to Excel. Is another format or report needed (for example a
+printable sheet per room for the day of the exam)?

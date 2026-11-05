@@ -1,58 +1,51 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using QPS.Application.Common.Exceptions;
 using QPS.Application.Common.Interfaces;
+using QPS.Application.Common.Services;
 using QPS.Application.Features.Users.DTOs;
 using QPS.Domain.Enums;
 
 namespace QPS.Application.Features.Users.Queries;
 
-public record GetUsersQuery(
-    UserRole? Role = null,
-    string? Search = null) : IRequest<List<UserDto>>;
+public record GetUsersQuery(UserRole? Role = null, string? Search = null, bool IncludeInactive = true) : IRequest<List<UserDto>>;
+public record GetUserQuery(Guid Id) : IRequest<UserDto>;
 
-public class GetUsersHandler : IRequestHandler<GetUsersQuery, List<UserDto>>
+public class GetUsersHandler :
+    IRequestHandler<GetUsersQuery, List<UserDto>>,
+    IRequestHandler<GetUserQuery, UserDto>
 {
-    private readonly IApplicationDbContext _context;
+    private readonly IApplicationDbContext _db;
 
-    public GetUsersHandler(IApplicationDbContext context) => _context = context;
+    public GetUsersHandler(IApplicationDbContext db) => _db = db;
 
-    public async Task<List<UserDto>> Handle(
-        GetUsersQuery request, CancellationToken cancellationToken)
+    public async Task<List<UserDto>> Handle(GetUsersQuery request, CancellationToken ct)
     {
-        var users = await _context.Users
-            .AsNoTracking()
-            .AsQueryable()
-            .Where(u => !u.IsDeleted)
-            .ToListAsync(cancellationToken);
+        var settings = await _db.GetSettingsAsync(ct);
+        var query = _db.Users.AsNoTracking().Where(u => !u.IsDeleted);
+        if (request.Role.HasValue) query = query.Where(u => u.Role == request.Role.Value);
+        if (!request.IncludeInactive) query = query.Where(u => u.IsActive);
 
-        if (request.Role.HasValue)
-            users = users.Where(u => u.Role == request.Role.Value).ToList();
-
+        var users = await query.ToListAsync(ct);
         if (!string.IsNullOrWhiteSpace(request.Search))
         {
-            var term = request.Search.ToLower();
-            users = users.Where(u =>
-                u.Email.ToLower().Contains(term) ||
-                u.FirstName.ToLower().Contains(term) ||
-                u.LastName.ToLower().Contains(term)).ToList();
+            var term = request.Search.Trim();
+            users = users.Where(u => u.FullName.Contains(term, StringComparison.OrdinalIgnoreCase)
+                                     || u.Email.Contains(term, StringComparison.OrdinalIgnoreCase)).ToList();
         }
 
-        var userIds = users.Select(u => u.Id).ToList();
-        var assignmentCounts = await _context.ProctorAssignments
-            .AsNoTracking()
-            .Where(a => userIds.Contains(a.UserId) && a.Status != AssignmentStatus.Cancelled && !a.IsDeleted)
-            .GroupBy(a => a.UserId)
-            .Select(g => new { UserId = g.Key, Count = g.Count() })
-            .ToDictionaryAsync(g => g.UserId, g => g.Count, cancellationToken);
-
         return users
-            .Select(u => new UserDto(
-                u.Id, u.Email, u.FirstName, u.LastName, u.FullName,
-                u.Role, u.DayOff, u.TargetWorkload,
-                u.MaxProctoringSessionsPerSemester, u.IsActive,
-                assignmentCounts.GetValueOrDefault(u.Id, 0)))
-            .OrderBy(u => u.LastName)
-            .ThenBy(u => u.FirstName)
+            .OrderBy(u => u.FirstName, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(u => u.LastName, StringComparer.OrdinalIgnoreCase)
+            .Select(u => UserDto.From(u, settings))
             .ToList();
+    }
+
+    public async Task<UserDto> Handle(GetUserQuery request, CancellationToken ct)
+    {
+        var settings = await _db.GetSettingsAsync(ct);
+        var user = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == request.Id && !u.IsDeleted, ct)
+                   ?? throw new NotFoundException("User", request.Id);
+        return UserDto.From(user, settings);
     }
 }

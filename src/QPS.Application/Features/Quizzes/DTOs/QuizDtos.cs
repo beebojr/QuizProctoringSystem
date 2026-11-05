@@ -1,53 +1,64 @@
-using MediatR;
-using Microsoft.AspNetCore.Http;
-using QPS.Application.Common.Models;
 using QPS.Domain.Enums;
 
 namespace QPS.Application.Features.Quizzes.DTOs;
 
-public record QuizDto(
-    Guid Id,
-    string CourseName,
-    DateOnly QuizDate,
-    TimeOnly StartTime,
-    TimeOnly EndTime,
-    int WeekNumber,
-    int SlotNumber,
-    string Group,
-    QuizStatus Status,
-    bool AutoAssign,
-    bool AddBackup,
-    List<QuizLocationDto> Locations);
+public record ProctorChipDto(
+    Guid AssignmentId,
+    Guid UserId,
+    string Name,
+    string Email,
+    bool IsCourseTa,
+    AssignmentSource Source,
+    string? OverrideReason,
+    List<string> Warnings);
 
 public record QuizLocationDto(
     Guid Id,
     string RoomName,
+    string? Group,
     int ProctorsNeeded,
-    List<ProctorAssignmentDto> Assignments);
+    bool IsReserve,
+    int SortOrder,
+    int Assigned,
+    List<ProctorChipDto> Proctors);
 
-public record ProctorAssignmentDto(
+public record QuizDto(
     Guid Id,
-    string TAName,
-    bool IsBackup,
-    AssignmentStatus Status);
-
-public record CreateQuizCommand(
     Guid CourseId,
+    string CourseName,
     Guid SemesterId,
+    ExamType ExamType,
+    int WeekNumber,
     DateOnly QuizDate,
     TimeOnly StartTime,
     TimeOnly EndTime,
-    int WeekNumber,
-    int SlotNumber,
-    string Group,
+    int? SlotNumber,
+    string SlotLabel,
+    QuizStatus Status,
     bool AutoAssign,
-    bool AddBackup,
-    List<CreateQuizLocationDto> Locations) : IRequest<Result<QuizDto>>;
+    bool HasReserve,
+    string? Notes,
+    QuizSource Source,
+    int ProctorsNeeded,
+    int ProctorsAssigned,
+    bool IsFullyStaffed,
+    int WarningCount,
+    List<QuizLocationDto> Locations);
 
-public record CreateQuizLocationDto(
+/// <summary>A room in the quiz form. Id is set when editing an existing location.</summary>
+public record LocationInput(Guid? Id, string RoomName, string? Group, int ProctorsNeeded, bool IsReserve = false);
+
+public record ShortfallDto(
+    Guid QuizId,
+    Guid LocationId,
+    string CourseName,
+    DateOnly Date,
+    TimeOnly StartTime,
+    TimeOnly EndTime,
     string RoomName,
-    int ProctorsNeeded);
+    int Missing,
+    List<string> Reasons);
 
-public record ImportQuizzesCommand(
-    Guid SemesterId,
-    IFormFile File) : IRequest<Result<List<QuizDto>>>;
+public record AutoAssignSummaryDto(int Assigned, int Missing, List<ShortfallDto> Shortfalls);
+
+public record QuizSaveResultDto(QuizDto Quiz, List<string> Warnings, AutoAssignSummaryDto? AutoAssign);

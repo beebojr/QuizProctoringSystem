@@ -1,49 +1,50 @@
-using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using QPS.Application.Common.Models;
+using QPS.Application.Features.Quizzes.Queries;
 using QPS.Application.Features.Schedules.Commands;
 using QPS.Application.Features.Schedules.DTOs;
 using QPS.Application.Features.Schedules.Queries;
+using QPS.Application.Common.Interfaces;
 
 namespace QPS.API.Controllers;
 
-[ApiController]
-[Route("api/[controller]")]
 [Authorize]
-public class SchedulesController : ControllerBase
+public class SchedulesController : ApiControllerBase
 {
-    private readonly ISender _sender;
-
-    public SchedulesController(ISender sender) => _sender = sender;
-
+    /// <summary>Admins see any TA; TAs always get their own schedule.</summary>
     [HttpGet]
-    public async Task<ActionResult<List<ScheduleSlotDto>>> GetSchedules(
-        [FromQuery] Guid? userId = null,
-        [FromQuery] Guid? semesterId = null,
-        CancellationToken cancellationToken = default)
-    {
-        var result = await _sender.Send(new GetSchedulesQuery(userId, semesterId), cancellationToken);
-        return Ok(result);
-    }
+    public async Task<ActionResult<List<ScheduleSlotDto>>> Get([FromQuery] Guid? userId, [FromQuery] Guid? semesterId, CancellationToken ct) =>
+        Ok(await Sender.Send(new GetSchedulesQuery(userId, semesterId), ct));
+
+    [HttpGet("overview")]
+    [Authorize(Roles = "Admin")]
+    public async Task<ActionResult<List<TaScheduleSummaryDto>>> Overview([FromQuery] Guid? semesterId, CancellationToken ct) =>
+        Ok(await Sender.Send(new GetScheduleOverviewQuery(semesterId), ct));
 
     [HttpPost]
+    public async Task<ActionResult> Create(CreateScheduleSlotCommand command, CancellationToken ct) =>
+        FromResult(await Sender.Send(command, ct));
+
+    [HttpPut("{id:guid}")]
+    public async Task<ActionResult> Update(Guid id, UpdateScheduleSlotCommand command, CancellationToken ct) =>
+        FromResult(await Sender.Send(command with { Id = id }, ct));
+
+    [HttpDelete("{id:guid}")]
+    public async Task<ActionResult> Delete(Guid id, CancellationToken ct) =>
+        FromResult(await Sender.Send(new DeleteScheduleSlotCommand(id), ct));
+
+    [HttpPost("import")]
     [Authorize(Roles = "Admin")]
-    public async Task<ActionResult<Result<ScheduleSlotDto>>> CreateSlot(
-        CreateScheduleSlotCommand command, CancellationToken cancellationToken)
+    [RequestSizeLimit(16 * 1024 * 1024)]
+    public async Task<ActionResult> Import(IFormFile file, [FromForm] Guid? semesterId, [FromForm] bool replaceExisting, CancellationToken ct)
     {
-        var result = await _sender.Send(command, cancellationToken);
-        if (!result.IsSuccess) return BadRequest(result);
-        return Ok(result);
+        await using var stream = await ReadExcelAsync(file, ct)
+                                 ?? throw new BadHttpRequestException("Choose a file to upload.");
+        return FromResult(await Sender.Send(new ImportSchedulesCommand(stream, semesterId, replaceExisting), ct));
     }
 
-    [HttpDelete("{id}")]
+    [HttpGet("import/template")]
     [Authorize(Roles = "Admin")]
-    public async Task<ActionResult<Result>> DeleteSlot(
-        Guid id, CancellationToken cancellationToken)
-    {
-        var result = await _sender.Send(new DeleteScheduleSlotCommand(id), cancellationToken);
-        if (!result.IsSuccess) return NotFound(result);
-        return Ok(result);
-    }
+    public FileContentResult Template([FromServices] IExcelExportService excel) =>
+        Download(new FileDto(excel.ScheduleTemplate(), "TA-schedule-template.xlsx", ExportQuizzesHandler.Xlsx));
 }

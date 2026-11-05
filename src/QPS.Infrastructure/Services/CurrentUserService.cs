@@ -11,16 +11,21 @@ public class CurrentUserService : ICurrentUserService
     public CurrentUserService(IHttpContextAccessor httpContextAccessor)
         => _httpContextAccessor = httpContextAccessor;
 
+    private ClaimsPrincipal? Principal => _httpContextAccessor.HttpContext?.User;
+
     public Guid? UserId
     {
         get
         {
-            var userId = _httpContextAccessor.HttpContext?.User?
-                .FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            return Guid.TryParse(userId, out var id) ? id : null;
+            var value = Principal?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            return Guid.TryParse(value, out var id) ? id : null;
         }
     }
 
-    public bool IsAuthenticated =>
-        _httpContextAccessor.HttpContext?.User?.Identity?.IsAuthenticated ?? false;
+    public bool IsAuthenticated => Principal?.Identity?.IsAuthenticated ?? false;
+
+    public bool IsAdmin => Principal?.IsInRole("Admin") ?? false;
+
+    public Guid RequireUserId() =>
+        UserId ?? throw new UnauthorizedAccessException("Sign in to continue.");
 }

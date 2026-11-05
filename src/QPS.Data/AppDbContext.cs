@@ -11,136 +11,124 @@ public class AppDbContext : DbContext, IApplicationDbContext
     public DbSet<User> Users => Set<User>();
     public DbSet<Course> Courses => Set<Course>();
     public DbSet<Semester> Semesters => Set<Semester>();
+    public DbSet<Room> Rooms => Set<Room>();
     public DbSet<Quiz> Quizzes => Set<Quiz>();
     public DbSet<QuizLocation> QuizLocations => Set<QuizLocation>();
     public DbSet<ProctorAssignment> ProctorAssignments => Set<ProctorAssignment>();
     public DbSet<TAScheduleSlot> TAScheduleSlots => Set<TAScheduleSlot>();
     public DbSet<Notification> Notifications => Set<Notification>();
     public DbSet<Excuse> Excuses => Set<Excuse>();
-    public DbSet<WorkloadConfig> WorkloadConfigs => Set<WorkloadConfig>();
+    public DbSet<SystemSettings> SystemSettings => Set<SystemSettings>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
 
-        // User
-        modelBuilder.Entity<User>(entity =>
+        // Deletes are real deletes, except users: a removed user is flagged IsDeleted so past
+        // proctoring history keeps its name. Queries filter deleted users explicitly.
+
+        modelBuilder.Entity<User>(e =>
         {
-            entity.HasQueryFilter(u => !u.IsDeleted);
-            entity.HasIndex(u => u.Email).IsUnique();
-            entity.Property(u => u.Email).HasMaxLength(256).IsRequired();
-            entity.Property(u => u.FirstName).HasMaxLength(100).IsRequired();
-            entity.Property(u => u.LastName).HasMaxLength(100).IsRequired();
-            entity.Property(u => u.PasswordHash).HasMaxLength(256).IsRequired();
+            e.HasIndex(u => u.Email).IsUnique();
+            e.Property(u => u.Email).HasMaxLength(256).IsRequired();
+            e.Property(u => u.FirstName).HasMaxLength(100).IsRequired();
+            e.Property(u => u.LastName).HasMaxLength(100).IsRequired();
+            e.Property(u => u.PasswordHash).HasMaxLength(256).IsRequired();
+            e.Property(u => u.Department).HasMaxLength(50).IsRequired();
+            e.Ignore(u => u.FullName);
         });
 
-        // Course
-        modelBuilder.Entity<Course>(entity =>
+        modelBuilder.Entity<Course>(e =>
         {
-            entity.HasQueryFilter(c => !c.IsDeleted);
-            entity.Property(c => c.Name).HasMaxLength(200).IsRequired();
-            entity.Property(c => c.Department).HasMaxLength(50).IsRequired();
+            e.Property(c => c.Name).HasMaxLength(200).IsRequired();
+            e.Property(c => c.NormalizedName).HasMaxLength(200).IsRequired();
+            e.Property(c => c.Code).HasMaxLength(30);
+            e.Property(c => c.Department).HasMaxLength(50).IsRequired();
+            e.HasIndex(c => new { c.Department, c.NormalizedName }).IsUnique();
         });
 
-        // Semester
-        modelBuilder.Entity<Semester>(entity =>
+        modelBuilder.Entity<Semester>(e =>
         {
-            entity.HasQueryFilter(s => !s.IsDeleted);
-            entity.Property(s => s.Name).HasMaxLength(100).IsRequired();
+            e.Property(s => s.Name).HasMaxLength(100).IsRequired();
         });
 
-        // Quiz
-        modelBuilder.Entity<Quiz>(entity =>
+        modelBuilder.Entity<Room>(e =>
         {
-            entity.HasQueryFilter(q => !q.IsDeleted);
-            entity.HasOne(q => q.Course)
-                  .WithMany()
-                  .HasForeignKey(q => q.CourseId)
-                  .OnDelete(DeleteBehavior.Restrict);
-            entity.HasOne(q => q.Semester)
-                  .WithMany()
-                  .HasForeignKey(q => q.SemesterId)
-                  .OnDelete(DeleteBehavior.Restrict);
+            e.Property(r => r.Name).HasMaxLength(50).IsRequired();
+            e.Property(r => r.NormalizedName).HasMaxLength(50).IsRequired();
+            e.HasIndex(r => r.NormalizedName).IsUnique();
         });
 
-        // QuizLocation
-        modelBuilder.Entity<QuizLocation>(entity =>
+        modelBuilder.Entity<Quiz>(e =>
         {
-            entity.HasQueryFilter(ql => !ql.IsDeleted);
-            entity.HasOne(ql => ql.Quiz)
-                  .WithMany(q => q.Locations)
-                  .HasForeignKey(ql => ql.QuizId)
-                  .OnDelete(DeleteBehavior.Cascade);
-            entity.Property(ql => ql.RoomName).HasMaxLength(50).IsRequired();
+            e.HasOne(q => q.Course).WithMany().HasForeignKey(q => q.CourseId).OnDelete(DeleteBehavior.Restrict);
+            e.HasOne(q => q.Semester).WithMany().HasForeignKey(q => q.SemesterId).OnDelete(DeleteBehavior.Restrict);
+            e.Property(q => q.Notes).HasMaxLength(500);
+            e.HasIndex(q => new { q.SemesterId, q.QuizDate });
         });
 
-        // ProctorAssignment
-        modelBuilder.Entity<ProctorAssignment>(entity =>
+        modelBuilder.Entity<QuizLocation>(e =>
         {
-            entity.HasQueryFilter(pa => !pa.IsDeleted);
-            entity.HasOne(pa => pa.QuizLocation)
-                  .WithMany(ql => ql.Assignments)
-                  .HasForeignKey(pa => pa.QuizLocationId)
-                  .OnDelete(DeleteBehavior.Cascade);
-            entity.HasOne(pa => pa.User)
-                  .WithMany()
-                  .HasForeignKey(pa => pa.UserId)
-                  .OnDelete(DeleteBehavior.Restrict);
+            e.HasOne(l => l.Quiz).WithMany(q => q.Locations).HasForeignKey(l => l.QuizId).OnDelete(DeleteBehavior.Cascade);
+            e.Property(l => l.RoomName).HasMaxLength(50).IsRequired();
+            e.Property(l => l.Group).HasMaxLength(40);
         });
 
-        // TAScheduleSlot
-        modelBuilder.Entity<TAScheduleSlot>(entity =>
+        modelBuilder.Entity<ProctorAssignment>(e =>
         {
-            entity.HasQueryFilter(ts => !ts.IsDeleted);
-            entity.HasOne(ts => ts.User)
-                  .WithMany()
-                  .HasForeignKey(ts => ts.UserId)
-                  .OnDelete(DeleteBehavior.Cascade);
-            entity.HasOne(ts => ts.Semester)
-                  .WithMany()
-                  .HasForeignKey(ts => ts.SemesterId)
-                  .OnDelete(DeleteBehavior.Restrict);
-            entity.Property(ts => ts.CourseName).HasMaxLength(200).IsRequired();
-            entity.Property(ts => ts.Room).HasMaxLength(50).IsRequired();
+            e.HasOne(a => a.QuizLocation).WithMany(l => l.Assignments).HasForeignKey(a => a.QuizLocationId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(a => a.User).WithMany().HasForeignKey(a => a.UserId).OnDelete(DeleteBehavior.Restrict);
+            e.Property(a => a.OverrideReason).HasMaxLength(300);
+            e.HasIndex(a => new { a.QuizLocationId, a.UserId }).IsUnique();
+            e.HasIndex(a => a.UserId);
         });
 
-        // Notification
-        modelBuilder.Entity<Notification>(entity =>
+        modelBuilder.Entity<TAScheduleSlot>(e =>
         {
-            entity.HasQueryFilter(n => !n.IsDeleted);
-            entity.HasOne(n => n.User)
-                  .WithMany()
-                  .HasForeignKey(n => n.UserId)
-                  .OnDelete(DeleteBehavior.Cascade);
-            entity.Property(n => n.Message).HasMaxLength(500).IsRequired();
+            e.HasOne(s => s.User).WithMany().HasForeignKey(s => s.UserId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(s => s.Semester).WithMany().HasForeignKey(s => s.SemesterId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(s => s.Course).WithMany().HasForeignKey(s => s.CourseId).OnDelete(DeleteBehavior.SetNull);
+            e.Property(s => s.CourseName).HasMaxLength(200).IsRequired();
+            e.Property(s => s.Room).HasMaxLength(50).IsRequired();
+            e.HasIndex(s => new { s.UserId, s.SemesterId, s.DayOfWeek, s.SlotNumber }).IsUnique();
         });
 
-        // Excuse
-        modelBuilder.Entity<Excuse>(entity =>
+        modelBuilder.Entity<Notification>(e =>
         {
-            entity.HasQueryFilter(e => !e.IsDeleted);
-            entity.HasOne(e => e.User)
-                  .WithMany()
-                  .HasForeignKey(e => e.UserId)
-                  .OnDelete(DeleteBehavior.Cascade);
-            entity.Property(e => e.Reason).HasMaxLength(500).IsRequired();
+            e.HasOne(n => n.User).WithMany().HasForeignKey(n => n.UserId).OnDelete(DeleteBehavior.Cascade);
+            e.Property(n => n.Message).HasMaxLength(500).IsRequired();
+            e.Property(n => n.Link).HasMaxLength(200);
+            e.HasIndex(n => new { n.UserId, n.IsRead });
         });
 
-        // WorkloadConfig
-        modelBuilder.Entity<WorkloadConfig>(entity =>
+        modelBuilder.Entity<Excuse>(e =>
         {
-            entity.HasQueryFilter(w => !w.IsDeleted);
+            e.HasOne(x => x.User).WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Cascade);
+            e.Property(x => x.Reason).HasMaxLength(500).IsRequired();
+        });
+
+        modelBuilder.Entity<SystemSettings>(e =>
+        {
+            e.Property(s => s.DepartmentName).HasMaxLength(50).IsRequired();
         });
     }
 
-    public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
+        var now = DateTime.UtcNow;
         foreach (var entry in ChangeTracker.Entries<BaseEntity>())
         {
-            if (entry.State == EntityState.Modified)
-                entry.Entity.UpdatedAt = DateTime.UtcNow;
+            if (entry.State == EntityState.Added)
+            {
+                if (entry.Entity.Id == Guid.Empty) entry.Entity.Id = Guid.NewGuid();
+                if (entry.Entity.CreatedAt == default) entry.Entity.CreatedAt = now;
+            }
+            else if (entry.State == EntityState.Modified)
+            {
+                entry.Entity.UpdatedAt = now;
+            }
         }
 
-        return await base.SaveChangesAsync(cancellationToken);
+        return base.SaveChangesAsync(cancellationToken);
     }
 }

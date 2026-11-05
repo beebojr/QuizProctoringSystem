@@ -8,6 +8,15 @@ public class ProctorAssignment : BaseEntity
     public QuizLocation QuizLocation { get; set; } = null!;
     public Guid UserId { get; set; }
     public User User { get; set; } = null!;
-    public bool IsBackup { get; set; }
-    public AssignmentStatus Status { get; set; }
+
+    /// <summary>The TA teaches this course (shown with a flag next to the name).</summary>
+    public bool IsCourseTa { get; set; }
+
+    public AssignmentSource Source { get; set; }
+
+    /// <summary>Set when an admin assigned someone despite a rule violation.</summary>
+    public string? OverrideReason { get; set; }
+
+    /// <summary>Workload points earned by this assignment (1 per session).</summary>
+    public double Points { get; set; } = 1;
 }

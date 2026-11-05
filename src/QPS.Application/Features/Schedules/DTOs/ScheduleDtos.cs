@@ -1,26 +1,33 @@
-using MediatR;
-using QPS.Application.Common.Models;
-using Enums = QPS.Domain.Enums;
+using QPS.Domain.Enums;
+using DayOfWeek = QPS.Domain.Enums.DayOfWeek;
 
 namespace QPS.Application.Features.Schedules.DTOs;
 
 public record ScheduleSlotDto(
     Guid Id,
     Guid UserId,
-    string TAName,
-    Enums.DayOfWeek DayOfWeek,
+    string TaName,
+    DayOfWeek Day,
     int SlotNumber,
+    string SlotLabel,
+    Guid? CourseId,
     string CourseName,
-    Enums.SlotType SlotType,
+    SlotType SlotType,
     string Room,
     TimeOnly StartTime,
     TimeOnly EndTime);
 
-public record CreateScheduleSlotCommand(
+public record ScheduleChangeDto(ScheduleSlotDto? Slot, List<string> Warnings);
+
+public record TaScheduleSummaryDto(
     Guid UserId,
-    Guid SemesterId,
-    Enums.DayOfWeek DayOfWeek,
-    int SlotNumber,
-    string CourseName,
-    Enums.SlotType SlotType,
-    string Room) : IRequest<Result<ScheduleSlotDto>>;
+    string Name,
+    string Email,
+    List<string> DaysOff,
+    int SlotCount,
+    bool CanEditSchedule,
+    bool IsActive);
+
+public record ScheduleImportErrorDto(int Row, string Message);
+
+public record ScheduleImportResultDto(int Created, int TasReplaced, List<ScheduleImportErrorDto> Errors);

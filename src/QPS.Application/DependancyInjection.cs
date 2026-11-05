@@ -3,6 +3,7 @@ using FluentValidation;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using QPS.Application.Common.Behaviors;
+using QPS.Application.Common.Services;
 
 namespace QPS.Application;
 
@@ -13,6 +14,8 @@ public static class DependancyInjection
         services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(Assembly.GetExecutingAssembly()));
         services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
         services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
+        services.AddScoped<AssignmentWorkspace>();
+        services.AddScoped<AutoAssigner>();
         return services;
     }
 }

@@ -1,6 +1,1 @@
-namespace QPS.Domain.Entities;
-
-public class WorkloadConfig : BaseEntity
-{
-    public int TargetWorkload { get; set; } = 14;
-}
+// Superseded by SystemSettings (DefaultTargetWorkload). This file is intentionally empty and can be deleted.

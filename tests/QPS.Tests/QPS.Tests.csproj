@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Dependency-free test runner. Run it with: dotnet run (inside tests/QPS.Tests)
+    It exits with code 1 when any test fails, so it also works in CI.
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\QPS.Domain\QPS.Domain.csproj" />
+    <ProjectReference Include="..\..\src\QPS.Application\QPS.Application.csproj" />
+    <ProjectReference Include="..\..\src\QPS.Infrastructure\QPS.Infrastructure.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -3,3 +3,8 @@ obj/
 *.user
 *.suo
 .vs/
+node_modules/
+client/dist/
+*.db-shm
+*.db-wal
+src/QPS.API/quizproctoring.db

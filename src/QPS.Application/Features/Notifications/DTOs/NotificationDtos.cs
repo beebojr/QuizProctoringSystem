@@ -1,7 +1,2 @@
-namespace QPS.Application.Features.Notifications.DTOs;
-
-public record NotificationDto(
-    Guid Id,
-    string Message,
-    bool IsRead,
-    DateTime CreatedAt);
+// Replaced in version 2 of the Quiz Proctoring System (see README.md).
+// This file is intentionally empty and can be deleted; cleanup-old-files.ps1 does that.

@@ -1,51 +1,51 @@
 using FluentValidation;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using QPS.Application.Common.Interfaces;
 using QPS.Application.Common.Models;
 using QPS.Application.Features.Auth.DTOs;
+using QPS.Application.Features.Auth.Queries;
 
 namespace QPS.Application.Features.Auth.Commands;
+
+public record LoginCommand(string Email, string Password) : IRequest<Result<AuthResponseDto>>;
 
 public class LoginValidator : AbstractValidator<LoginCommand>
 {
     public LoginValidator()
     {
-        RuleFor(x => x.Email)
-            .NotEmpty().EmailAddress();
-        RuleFor(x => x.Password)
-            .NotEmpty();
+        RuleFor(x => x.Email).NotEmpty().EmailAddress();
+        RuleFor(x => x.Password).NotEmpty();
     }
 }
 
 public class LoginHandler : IRequestHandler<LoginCommand, Result<AuthResponseDto>>
 {
-    private readonly IApplicationDbContext _context;
-    private readonly ITokenService _tokenService;
+    private readonly IApplicationDbContext _db;
+    private readonly ITokenService _tokens;
 
-    public LoginHandler(IApplicationDbContext context, ITokenService tokenService)
+    public LoginHandler(IApplicationDbContext db, ITokenService tokens)
     {
-        _context = context;
-        _tokenService = tokenService;
+        _db = db;
+        _tokens = tokens;
     }
 
-    public Task<Result<AuthResponseDto>> Handle(
-        LoginCommand request, CancellationToken cancellationToken)
+    public async Task<Result<AuthResponseDto>> Handle(LoginCommand request, CancellationToken ct)
     {
-        var user = _context.Users.FirstOrDefault(u => u.Email == request.Email);
-        if (user == null || !BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
-            return Task.FromResult(Result<AuthResponseDto>.Fail("Invalid email or password"));
+        var email = request.Email.Trim().ToLowerInvariant();
+        var user = await _db.Users.FirstOrDefaultAsync(u => u.Email == email && !u.IsDeleted, ct);
+
+        // Same message for unknown email and wrong password (no account enumeration).
+        if (user is null || !BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
+            return Result<AuthResponseDto>.Fail("Incorrect email or password.");
 
         if (!user.IsActive)
-            return Task.FromResult(Result<AuthResponseDto>.Fail("Account is inactive"));
+            return Result<AuthResponseDto>.Fail("This account is deactivated. Contact an administrator.");
 
-        var token = _tokenService.GenerateAccessToken(user);
-        var refreshToken = _tokenService.GenerateRefreshToken();
+        user.LastLoginAt = DateTime.UtcNow;
+        await _db.SaveChangesAsync(ct);
 
-        var response = new AuthResponseDto(
-            token,
-            refreshToken,
-            DateTime.UtcNow.AddMinutes(60));
-
-        return Task.FromResult(Result<AuthResponseDto>.Ok(response, "Login successful"));
+        var (token, expiresAt) = _tokens.GenerateAccessToken(user);
+        return Result<AuthResponseDto>.Ok(new AuthResponseDto(token, expiresAt, GetCurrentUserHandler.ToDto(user)));
     }
 }

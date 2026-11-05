@@ -13,10 +13,10 @@ public class Result<T>
         => new() { IsSuccess = true, Value = value, Message = message };
 
     public static Result<T> Fail(string error)
-        => new() { IsSuccess = false, Errors = new List<string> { error } };
+        => new() { IsSuccess = false, Errors = new List<string> { error }, Message = error };
 
     public static Result<T> Fail(List<string> errors)
-        => new() { IsSuccess = false, Errors = errors };
+        => new() { IsSuccess = false, Errors = errors, Message = errors.FirstOrDefault() };
 }
 
 public class Result
@@ -31,5 +31,5 @@ public class Result
         => new() { IsSuccess = true, Message = message };
 
     public static Result Fail(string error)
-        => new() { IsSuccess = false, Errors = new List<string> { error } };
+        => new() { IsSuccess = false, Errors = new List<string> { error }, Message = error };
 }

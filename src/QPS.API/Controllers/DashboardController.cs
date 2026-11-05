@@ -1,46 +1,19 @@
-using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using QPS.Application.Features.Dashboard.DTOs;
-using QPS.Application.Features.Dashboard.Queries;
+using QPS.Application.Features.Reports;
 
 namespace QPS.API.Controllers;
 
-[ApiController]
-[Route("api/[controller]")]
 [Authorize]
-public class DashboardController : ControllerBase
+public class DashboardController : ApiControllerBase
 {
-    private readonly ISender _sender;
-
-    public DashboardController(ISender sender) => _sender = sender;
-
-    [HttpGet("workload/{userId}")]
-    public async Task<ActionResult<WorkloadSummaryDto>> GetWorkload(
-        Guid userId, [FromQuery] Guid semesterId, CancellationToken ct)
-    {
-        var result = await _sender.Send(new GetWorkloadSummaryQuery(userId, semesterId), ct);
-        return Ok(result);
-    }
-
-    [HttpGet]
+    [HttpGet("admin")]
     [Authorize(Roles = "Admin")]
-    public async Task<ActionResult<SystemDashboardDto>> GetSystemDashboard(
-        CancellationToken ct)
-    {
-        var result = await _sender.Send(new GetSystemDashboardQuery(), ct);
-        return Ok(result);
-    }
+    public async Task<ActionResult<AdminDashboardDto>> Admin([FromQuery] Guid? semesterId, CancellationToken ct) =>
+        Ok(await Sender.Send(new GetAdminDashboardQuery(semesterId), ct));
 
-    [HttpGet("report")]
-    [Authorize(Roles = "Admin")]
-    public async Task<ActionResult<ReportDto>> GetReport(
-        [FromQuery] DateOnly fromDate,
-        [FromQuery] DateOnly toDate,
-        [FromQuery] Guid? semesterId = null,
-        CancellationToken ct = default)
-    {
-        var result = await _sender.Send(new GetReportQuery(fromDate, toDate, semesterId), ct);
-        return Ok(result);
-    }
+    [HttpGet("ta")]
+    [Authorize(Roles = "TA")]
+    public async Task<ActionResult<TaDashboardDto>> Ta(CancellationToken ct) =>
+        Ok(await Sender.Send(new GetTaDashboardQuery(), ct));
 }

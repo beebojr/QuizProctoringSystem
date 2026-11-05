@@ -10,12 +10,16 @@ public static class DependancyInjection
     public static IServiceCollection AddDataServices(
         this IServiceCollection services, IConfiguration configuration)
     {
-        services.AddDbContext<AppDbContext>(options =>
-            options.UseSqlite(configuration.GetConnectionString("DefaultConnection")));
+        var connection = configuration.GetConnectionString("DefaultConnection") ?? "Data Source=quizproctoring.db";
+        services.AddDbContext<AppDbContext>(options => Configure(options, connection));
 
         services.AddScoped<IApplicationDbContext>(provider =>
             provider.GetRequiredService<AppDbContext>());
 
         return services;
     }
+
+    public static void Configure(DbContextOptionsBuilder options, string connectionString) =>
+        options.UseSqlite(connectionString, sqlite =>
+            sqlite.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery));
 }

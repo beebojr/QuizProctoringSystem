@@ -1,49 +1,28 @@
-using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using QPS.Application.Common.Models;
 using QPS.Application.Features.Auth.Commands;
 using QPS.Application.Features.Auth.DTOs;
 using QPS.Application.Features.Auth.Queries;
 
 namespace QPS.API.Controllers;
 
-[ApiController]
-[Route("api/[controller]")]
-public class AuthController : ControllerBase
+public class AuthController : ApiControllerBase
 {
-    private readonly ISender _sender;
-
-    public AuthController(ISender sender) => _sender = sender;
-
-    [HttpPost("register")]
-    public async Task<ActionResult<Result<AuthResponseDto>>> Register(
-        RegisterCommand command, CancellationToken cancellationToken)
-    {
-        var result = await _sender.Send(command, cancellationToken);
-        if (!result.IsSuccess)
-            return BadRequest(result);
-        return Ok(result);
-    }
-
     [HttpPost("login")]
-    public async Task<ActionResult<Result<AuthResponseDto>>> Login(
-        LoginCommand command, CancellationToken cancellationToken)
+    [AllowAnonymous]
+    public async Task<ActionResult> Login(LoginCommand command, CancellationToken ct)
     {
-        var result = await _sender.Send(command, cancellationToken);
-        if (!result.IsSuccess)
-            return Unauthorized(result);
-        return Ok(result);
+        var result = await Sender.Send(command, ct);
+        return result.IsSuccess ? Ok(result) : Unauthorized(result);
     }
 
     [Authorize]
     [HttpGet("me")]
-    public async Task<ActionResult<Result<CurrentUserDto>>> GetCurrentUser(
-        CancellationToken cancellationToken)
-    {
-        var result = await _sender.Send(new GetCurrentUserQuery(), cancellationToken);
-        if (!result.IsSuccess)
-            return NotFound(result);
-        return Ok(result);
-    }
+    public async Task<ActionResult<CurrentUserDto>> Me(CancellationToken ct) =>
+        Ok(await Sender.Send(new GetCurrentUserQuery(), ct));
+
+    [Authorize]
+    [HttpPost("change-password")]
+    public async Task<ActionResult> ChangePassword(ChangePasswordCommand command, CancellationToken ct) =>
+        FromResult(await Sender.Send(command, ct));
 }

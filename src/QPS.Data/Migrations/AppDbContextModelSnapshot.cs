@@ -23,6 +23,10 @@ namespace QPS.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("Code")
+                        .HasMaxLength(30)
+                        .HasColumnType("TEXT");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT");
 
@@ -45,10 +49,18 @@ namespace QPS.Data.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("NormalizedName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("Department", "NormalizedName")
+                        .IsUnique();
 
                     b.ToTable("Courses");
                 });
@@ -62,6 +74,9 @@ namespace QPS.Data.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT");
 
+                    b.Property<Guid?>("CreatedById")
+                        .HasColumnType("TEXT");
+
                     b.Property<DateTime?>("DeletedAt")
                         .HasColumnType("TEXT");
 
@@ -70,9 +85,6 @@ namespace QPS.Data.Migrations
 
                     b.Property<DateOnly>("EndDate")
                         .HasColumnType("TEXT");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("INTEGER");
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("INTEGER");
@@ -84,6 +96,9 @@ namespace QPS.Data.Migrations
 
                     b.Property<DateOnly>("StartDate")
                         .HasColumnType("TEXT");
+
+                    b.Property<bool>("SubmittedByTa")
+                        .HasColumnType("INTEGER");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("TEXT");
@@ -119,10 +134,17 @@ namespace QPS.Data.Migrations
                     b.Property<bool>("IsRead")
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("Link")
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("Message")
                         .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("TEXT");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("INTEGER");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("TEXT");
@@ -132,7 +154,7 @@ namespace QPS.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("UserId", "IsRead");
 
                     b.ToTable("Notifications");
                 });
@@ -152,16 +174,23 @@ namespace QPS.Data.Migrations
                     b.Property<string>("DeletedBy")
                         .HasColumnType("TEXT");
 
-                    b.Property<bool>("IsBackup")
+                    b.Property<bool>("IsCourseTa")
                         .HasColumnType("INTEGER");
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("OverrideReason")
+                        .HasMaxLength(300)
+                        .HasColumnType("TEXT");
+
+                    b.Property<double>("Points")
+                        .HasColumnType("REAL");
+
                     b.Property<Guid>("QuizLocationId")
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("Status")
+                    b.Property<int>("Source")
                         .HasColumnType("INTEGER");
 
                     b.Property<DateTime?>("UpdatedAt")
@@ -172,9 +201,10 @@ namespace QPS.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("QuizLocationId");
-
                     b.HasIndex("UserId");
+
+                    b.HasIndex("QuizLocationId", "UserId")
+                        .IsUnique();
 
                     b.ToTable("ProctorAssignments");
                 });
@@ -184,9 +214,6 @@ namespace QPS.Data.Migrations
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
-
-                    b.Property<bool>("AddBackup")
-                        .HasColumnType("INTEGER");
 
                     b.Property<bool>("AutoAssign")
                         .HasColumnType("INTEGER");
@@ -206,12 +233,18 @@ namespace QPS.Data.Migrations
                     b.Property<TimeOnly>("EndTime")
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("Group")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
+                    b.Property<int>("ExamType")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("HasReserve")
+                        .HasColumnType("INTEGER");
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("INTEGER");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT");
 
                     b.Property<DateOnly>("QuizDate")
                         .HasColumnType("TEXT");
@@ -219,14 +252,14 @@ namespace QPS.Data.Migrations
                     b.Property<Guid>("SemesterId")
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("SlotNumber")
+                    b.Property<int?>("SlotNumber")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Source")
                         .HasColumnType("INTEGER");
 
                     b.Property<TimeOnly>("StartTime")
                         .HasColumnType("TEXT");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("INTEGER");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("TEXT");
@@ -238,7 +271,7 @@ namespace QPS.Data.Migrations
 
                     b.HasIndex("CourseId");
 
-                    b.HasIndex("SemesterId");
+                    b.HasIndex("SemesterId", "QuizDate");
 
                     b.ToTable("Quizzes");
                 });
@@ -258,7 +291,14 @@ namespace QPS.Data.Migrations
                     b.Property<string>("DeletedBy")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("Group")
+                        .HasMaxLength(40)
+                        .HasColumnType("TEXT");
+
                     b.Property<bool>("IsDeleted")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("IsReserve")
                         .HasColumnType("INTEGER");
 
                     b.Property<int>("ProctorsNeeded")
@@ -272,6 +312,9 @@ namespace QPS.Data.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("TEXT");
 
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("INTEGER");
+
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("TEXT");
 
@@ -280,6 +323,51 @@ namespace QPS.Data.Migrations
                     b.HasIndex("QuizId");
 
                     b.ToTable("QuizLocations");
+                });
+
+            modelBuilder.Entity("QPS.Domain.Entities.Room", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("Capacity")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("DefaultProctors")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("DeletedBy")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("NormalizedName")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NormalizedName")
+                        .IsUnique();
+
+                    b.ToTable("Rooms");
                 });
 
             modelBuilder.Entity("QPS.Domain.Entities.Semester", b =>
@@ -322,10 +410,62 @@ namespace QPS.Data.Migrations
                     b.ToTable("Semesters");
                 });
 
+            modelBuilder.Entity("QPS.Domain.Entities.SystemSettings", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("DefaultMaxSessionsPerSemester")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("DefaultProctorsPerRoom")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<double>("DefaultTargetWorkload")
+                        .HasColumnType("REAL");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("DeletedBy")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("DepartmentName")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("MaxSessionsPerWeek")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("PreferCourseTas")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("ReserveProctors")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("SystemSettings");
+                });
+
             modelBuilder.Entity("QPS.Domain.Entities.TAScheduleSlot", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid?>("CourseId")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("CourseName")
@@ -376,9 +516,12 @@ namespace QPS.Data.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("CourseId");
+
                     b.HasIndex("SemesterId");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("UserId", "SemesterId", "DayOfWeek", "SlotNumber")
+                        .IsUnique();
 
                     b.ToTable("TAScheduleSlots");
                 });
@@ -389,16 +532,24 @@ namespace QPS.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
 
+                    b.Property<bool>("CanEditSchedule")
+                        .HasColumnType("INTEGER");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT");
 
-                    b.Property<int?>("DayOff")
+                    b.Property<int>("DaysOff")
                         .HasColumnType("INTEGER");
 
                     b.Property<DateTime?>("DeletedAt")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("DeletedBy")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Department")
+                        .IsRequired()
+                        .HasMaxLength(50)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Email")
@@ -417,12 +568,15 @@ namespace QPS.Data.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("INTEGER");
 
+                    b.Property<DateTime?>("LastLoginAt")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("LastName")
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("MaxProctoringSessionsPerSemester")
+                    b.Property<int?>("MaxSessionsOverride")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("PasswordHash")
@@ -433,8 +587,8 @@ namespace QPS.Data.Migrations
                     b.Property<int>("Role")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int>("TargetWorkload")
-                        .HasColumnType("INTEGER");
+                    b.Property<double?>("TargetWorkloadOverride")
+                        .HasColumnType("REAL");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("TEXT");
@@ -445,35 +599,6 @@ namespace QPS.Data.Migrations
                         .IsUnique();
 
                     b.ToTable("Users");
-                });
-
-            modelBuilder.Entity("QPS.Domain.Entities.WorkloadConfig", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("DeletedBy")
-                        .HasColumnType("TEXT");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("TargetWorkload")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("WorkloadConfigs");
                 });
 
             modelBuilder.Entity("QPS.Domain.Entities.Excuse", b =>
@@ -549,10 +674,15 @@ namespace QPS.Data.Migrations
 
             modelBuilder.Entity("QPS.Domain.Entities.TAScheduleSlot", b =>
                 {
+                    b.HasOne("QPS.Domain.Entities.Course", "Course")
+                        .WithMany()
+                        .HasForeignKey("CourseId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("QPS.Domain.Entities.Semester", "Semester")
                         .WithMany()
                         .HasForeignKey("SemesterId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("QPS.Domain.Entities.User", "User")
@@ -560,6 +690,8 @@ namespace QPS.Data.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Course");
 
                     b.Navigation("Semester");
 

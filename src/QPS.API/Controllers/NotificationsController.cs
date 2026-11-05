@@ -1,45 +1,21 @@
-using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using QPS.Application.Common.Models;
-using QPS.Application.Features.Notifications.Commands;
-using QPS.Application.Features.Notifications.DTOs;
-using QPS.Application.Features.Notifications.Queries;
+using QPS.Application.Features.Notifications;
 
 namespace QPS.API.Controllers;
 
-[ApiController]
-[Route("api/[controller]")]
 [Authorize]
-public class NotificationsController : ControllerBase
+public class NotificationsController : ApiControllerBase
 {
-    private readonly ISender _sender;
-
-    public NotificationsController(ISender sender) => _sender = sender;
-
     [HttpGet]
-    public async Task<ActionResult<List<NotificationDto>>> GetNotifications(
-        [FromQuery] bool? isRead = null,
-        CancellationToken cancellationToken = default)
-    {
-        var result = await _sender.Send(new GetNotificationsQuery(null, isRead), cancellationToken);
-        return Ok(result);
-    }
+    public async Task<ActionResult<NotificationFeedDto>> Get([FromQuery] int take = 50, [FromQuery] bool unreadOnly = false, CancellationToken ct = default) =>
+        Ok(await Sender.Send(new GetNotificationsQuery(take, unreadOnly), ct));
 
-    [HttpPut("{id}/read")]
-    public async Task<ActionResult<Result>> MarkAsRead(
-        Guid id, CancellationToken cancellationToken)
-    {
-        var result = await _sender.Send(new MarkAsReadCommand(id), cancellationToken);
-        if (!result.IsSuccess) return NotFound(result);
-        return Ok(result);
-    }
+    [HttpPut("{id:guid}/read")]
+    public async Task<ActionResult> MarkRead(Guid id, CancellationToken ct) =>
+        FromResult(await Sender.Send(new MarkAsReadCommand(id), ct));
 
     [HttpPut("read-all")]
-    public async Task<ActionResult<Result>> MarkAllAsRead(
-        CancellationToken cancellationToken)
-    {
-        var result = await _sender.Send(new MarkAllAsReadCommand(), cancellationToken);
-        return Ok(result);
-    }
+    public async Task<ActionResult> MarkAllRead(CancellationToken ct) =>
+        FromResult(await Sender.Send(new MarkAllAsReadCommand(), ct));
 }

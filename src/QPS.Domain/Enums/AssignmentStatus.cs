@@ -1,8 +1,2 @@
-namespace QPS.Domain.Enums;
-
-public enum AssignmentStatus
-{
-    Assigned = 0,
-    Confirmed = 1,
-    Cancelled = 2
-}
+// Superseded: assignment state is now derived from the quiz time (upcoming / done).
+// This file is intentionally empty and can be deleted.
